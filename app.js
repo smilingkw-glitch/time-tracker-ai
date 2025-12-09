@@ -1,3 +1,9 @@
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+console.log("Firebase connected");
 // ---------------------- Firebase Initialization ---------------------- //
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
