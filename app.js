@@ -32,13 +32,12 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-console.log("Firebase connected");
-
 // ---------------------- DOM Elements ---------------------- //
 const loginSection = document.getElementById("login-section");
 const appSection = document.getElementById("app-section");
 const googleLoginBtn = document.getElementById("google-login");
 const logoutBtn = document.getElementById("logout-btn");
+
 const datePicker = document.getElementById("date-picker");
 const activityName = document.getElementById("activity-name");
 const activityMin = document.getElementById("activity-min");
@@ -49,94 +48,94 @@ const remainingTimeP = document.getElementById("remaining-time");
 const analyseBtn = document.getElementById("analyse-btn");
 const dashboard = document.getElementById("dashboard");
 const noData = document.getElementById("no-data");
+const chartCanvas = document.getElementById("chart");
 
+let activities = [];
 let remainingMinutes = 1440;
+let chartInstance = null;
 
-// ---------------------- Login with Google ---------------------- //
+// ---------------------- Login ---------------------- //
 googleLoginBtn.addEventListener("click", async () => {
   try {
     const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    console.log("Logged in as:", user.displayName);
-  } catch (error) {
-    console.error("Login failed:", error);
+    console.log("Logged in as:", result.user.displayName);
+  } catch (err) {
+    console.error("Login failed:", err);
   }
 });
 
-// ---------------------- Logout ---------------------- //
 logoutBtn.addEventListener("click", async () => {
   try {
     await signOut(auth);
-    console.log("User logged out");
-  } catch (error) {
-    console.error("Logout failed:", error);
+    console.log("Logged out");
+  } catch (err) {
+    console.error("Logout failed:", err);
   }
 });
 
-// ---------------------- Show App if Logged in ---------------------- //
 onAuthStateChanged(auth, (user) => {
-  if (user) {
+  if(user){
     loginSection.style.display = "none";
     appSection.style.display = "block";
+    if(datePicker.value) fetchActivities();
   } else {
     loginSection.style.display = "block";
     appSection.style.display = "none";
   }
 });
 
-// ---------------------- Add Activity Function ---------------------- //
+// ---------------------- Add Activity ---------------------- //
 addActivityBtn.addEventListener("click", async () => {
   const name = activityName.value.trim();
   const minutes = parseInt(activityMin.value);
   const category = activityCategory.value;
 
-  if (!name || !minutes || minutes <= 0) {
+  if(!name || !minutes || minutes <=0){
     alert("Enter valid activity and minutes");
     return;
   }
 
-  if (minutes > remainingMinutes) {
-    alert(`You only have ${remainingMinutes} minutes left for this day`);
+  if(minutes > remainingMinutes){
+    alert(`Only ${remainingMinutes} minutes remaining`);
     return;
   }
 
   const user = auth.currentUser;
-  if (!user) return alert("User not logged in");
+  if(!user) return alert("Login first");
 
   const date = datePicker.value;
-  if (!date) return alert("Select a date");
+  if(!date) return alert("Select a date");
 
-  const activity = { name, minutes, category };
-
-  // Save to Firestore
+  const activity = {name, minutes, category};
   const docRef = doc(db, "users", user.uid, "days", date, "activities", name);
   await setDoc(docRef, activity);
 
-  // Update remaining minutes
+  activities.push(activity);
   remainingMinutes -= minutes;
   remainingTimeP.innerText = `Remaining: ${remainingMinutes} minutes`;
 
-  // Clear inputs
+  renderActivitiesUI();
   activityName.value = "";
   activityMin.value = "";
-
-  // Render activities
-  renderActivities();
 });
 
-// ---------------------- Render Activities ---------------------- //
-async function renderActivities() {
-  activityListDiv.innerHTML = "";
+// ---------------------- Fetch & Render ---------------------- //
+datePicker.addEventListener("change", fetchActivities);
+
+async function fetchActivities(){
   const user = auth.currentUser;
-  if (!user) return;
+  if(!user) return;
 
   const date = datePicker.value;
-  if (!date) return;
+  if(!date) return;
 
   const activitiesCol = collection(db, "users", user.uid, "days", date, "activities");
   const snapshot = await getDocs(activitiesCol);
 
-  if (snapshot.empty) {
+  activities = [];
+  let total = 0;
+
+  if(snapshot.empty){
     noData.style.display = "block";
     dashboard.style.display = "none";
     activityListDiv.innerHTML = "<p>No activities yet</p>";
@@ -145,94 +144,59 @@ async function renderActivities() {
     return;
   }
 
-  noData.style.display = "none";
-  dashboard.style.display = "none";
-
-  let totalMinutes = 0;
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
-    totalMinutes += data.minutes;
-    const div = document.createElement("div");
-    div.innerText = `${data.name} - ${data.category} - ${data.minutes} min`;
-    activityListDiv.appendChild(div);
+    activities.push(data);
+    total += data.minutes;
   });
 
-  remainingMinutes = 1440 - totalMinutes;
+  remainingMinutes = 1440 - total;
   remainingTimeP.innerText = `Remaining: ${remainingMinutes} minutes`;
+
+  noData.style.display = "none";
+  dashboard.style.display = "none";
+  renderActivitiesUI();
 }
 
-// ---------------------- Fetch Activities on Date Change ---------------------- //
-datePicker.addEventListener("change", () => {
-  renderActivities();
-});
+// ---------------------- Render UI ---------------------- //
+function renderActivitiesUI(){
+  activityListDiv.innerHTML = "";
+  activities.forEach(a => {
+    const div = document.createElement("div");
+    div.innerText = `${a.name} - ${a.category} - ${a.minutes} min`;
+    activityListDiv.appendChild(div);
+  });
+}
 
 // ---------------------- Analyse Button ---------------------- //
-analyseBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) return alert("User not logged in");
-
-  const date = datePicker.value;
-  if (!date) return alert("Select a date");
-
-  const activitiesCol = collection(db, "users", user.uid, "days", date, "activities");
-  const snapshot = await getDocs(activitiesCol);
-
-  if (snapshot.empty) {
-    dashboard.style.display = "none";
-    noData.style.display = "block";
+analyseBtn.addEventListener("click", () => {
+  if(activities.length === 0){
+    alert("No activities to analyse");
     return;
   }
 
-  noData.style.display = "none";
-  dashboard.style.display = "block";
-
-  // Prepare data for chart
-  const categoryMap = {};
-  let totalMinutes = 0;
-
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    totalMinutes += data.minutes;
-    if (categoryMap[data.category]) {
-      categoryMap[data.category] += data.minutes;
-    } else {
-      categoryMap[data.category] = data.minutes;
-    }
+  const categoryMinutes = {};
+  activities.forEach(a => {
+    if(!categoryMinutes[a.category]) categoryMinutes[a.category] = 0;
+    categoryMinutes[a.category] += a.minutes;
   });
 
-  // Summary text
-  const summary = document.getElementById("summary");
-  summary.innerText = `Total Hours: ${(totalMinutes / 60).toFixed(2)}h | Total Activities: ${snapshot.size}`;
+  const labels = Object.keys(categoryMinutes);
+  const data = Object.values(categoryMinutes);
 
-  // Prepare chart
-  const ctx = document.getElementById("chart").getContext("2d");
+  if(chartInstance) chartInstance.destroy();
 
-  // Destroy previous chart if exists
-  if (window.myChart) window.myChart.destroy();
-
-  window.myChart = new Chart(ctx, {
-    type: 'pie',
+  chartInstance = new Chart(chartCanvas, {
+    type: "pie",
     data: {
-      labels: Object.keys(categoryMap),
-      datasets: [{
-        data: Object.values(categoryMap),
-        backgroundColor: [
-          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-        ]
+      labels,
+      datasets:[{
+        label: "Minutes spent",
+        data,
+        backgroundColor: ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899"]
       }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-        },
-        title: {
-          display: true,
-          text: `Activities Breakdown for ${date}`
-        }
-      }
     }
   });
-});
 
+  dashboard.style.display = "block";
+});
