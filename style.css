@@ -1,44 +1,92 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #f3f4f6, #e2e8f0);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 20px;
 }
 
-section {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 500px;
-  margin: auto;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+h1, h2, h3 {
+  margin-bottom: 20px;
+  color: #111827;
+  text-align: center;
 }
 
 button {
-  padding: 10px;
+  padding: 10px 20px;
   margin-top: 10px;
-  width: 100%;
-  background: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 8px;
   cursor: pointer;
+  border: none;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 5px;
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background: #4338ca;
+  background-color: #2563eb;
+  transform: translateY(-2px);
 }
 
 input, select {
-  width: 100%;
   padding: 10px;
-  margin-top: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  margin: 5px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+}
+
+.activity-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 #activity-list div {
-  background: #eef;
+  background-color: #f9fafb;
   padding: 10px;
-  margin-top: 5px;
-  border-radius: 6px;
+  margin: 5px 0;
+  border-radius: 5px;
+  animation: slideIn 0.5s ease;
+}
+
+.logout-btn {
+  float: right;
+  margin-bottom: 20px;
+}
+
+#dashboard, #no-data {
+  margin-top: 20px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes slideIn {
+  from {opacity: 0; transform: translateX(-20px);}
+  to {opacity: 1; transform: translateX(0);}
+}
+
+/* Responsive */
+@media(max-width: 768px) {
+  .activity-inputs {
+    flex-direction: column;
+  }
 }
