@@ -4,40 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI-Powered Time Tracker</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
   <!-- Login Section -->
-  <section id="login-section">
+  <section id="login-section" class="fade-in">
     <h1>AI-Powered Time Tracker</h1>
     <button id="google-login">Sign in with Google</button>
   </section>
 
   <!-- Main App Section -->
-  <section id="app-section" style="display:none;">
-    <button id="logout-btn">Logout</button>
+  <section id="app-section" style="display:none;" class="fade-in">
+    <button id="logout-btn" class="logout-btn">Logout</button>
 
     <h2>Log Daily Activities</h2>
 
-    <!-- Date Picker -->
     <input type="date" id="date-picker">
 
-    <!-- Remaining Minutes -->
     <p id="remaining-time">Remaining: 1440 minutes</p>
 
-    <!-- Activity Input -->
-    <input type="text" id="activity-name" placeholder="Activity name">
-    <input type="number" id="activity-min" placeholder="Minutes">
-    <select id="activity-category">
-      <option>Work</option>
-      <option>Study</option>
-      <option>Sleep</option>
-      <option>Exercise</option>
-      <option>Entertainment</option>
-      <option>Other</option>
-    </select>
-    <button id="add-activity">Add Activity</button>
+    <div class="activity-inputs">
+      <input type="text" id="activity-name" placeholder="Activity name">
+      <input type="number" id="activity-min" placeholder="Minutes">
+      <select id="activity-category">
+        <option>Work</option>
+        <option>Study</option>
+        <option>Sleep</option>
+        <option>Exercise</option>
+        <option>Entertainment</option>
+        <option>Other</option>
+      </select>
+      <button id="add-activity">Add Activity</button>
+    </div>
 
     <h3>Activities for this date</h3>
     <div id="activity-list"></div>
@@ -52,19 +52,13 @@
     </section>
 
     <!-- No Data Section -->
-    <section id="no-data" style="display:none;">
+    <section id="no-data" style="display:none;" class="fade-in">
       <h2>No Data Available</h2>
       <p>Start logging your activities for this day.</p>
     </section>
 
   </section>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-
-  <!-- Your app.js -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
